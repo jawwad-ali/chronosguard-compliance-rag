@@ -3,11 +3,14 @@
 **Temporal Compliance RAG Engine** — detects *regulatory drift* by auditing internal company
 policies against the regulation that was actually **in force in a jurisdiction on a given date**.
 
-[![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)](./.github/workflows/ci.yml)
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](apps/api/pyproject.toml)
-[![FastAPI](https://img.shields.io/badge/FastAPI-async-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Postgres + pgvector](https://img.shields.io/badge/Postgres-pgvector-4169E1?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
-[![mypy strict](https://img.shields.io/badge/mypy-strict-blue)](apps/api/pyproject.toml)
+[![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)](./.github/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-178_passing-brightgreen?style=flat-square)](apps/api/tests)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](apps/api/pyproject.toml)
+[![FastAPI](https://img.shields.io/badge/FastAPI-async-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![PostgreSQL](https://img.shields.io/badge/Postgres-pgvector-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
+[![OpenAI](https://img.shields.io/badge/OpenAI-structured_outputs-412991?style=flat-square&logo=openai&logoColor=white)](apps/api/src/chronosguard/providers)
+[![mypy strict](https://img.shields.io/badge/mypy-strict-blue?style=flat-square)](apps/api/pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
 ## Why this exists
 
@@ -131,3 +134,10 @@ gates green ([docs/ROADMAP.md](docs/ROADMAP.md)). Deploy config for Neon + Rende
 [infra/render.yaml](infra/render.yaml) with runbooks in [docs/runbooks/](docs/runbooks/).
 Phase 2 (Next.js audit dashboard, n8n nightly monitor) builds against the frozen contract in
 [packages/contracts/openapi.json](packages/contracts/openapi.json).
+
+## License & author
+
+MIT — see [LICENSE](LICENSE).
+
+Built by **Ali Jawwad** ([@jawwad-ali](https://github.com/jawwad-ali)). If this repo's
+temporal-RAG or RLS patterns helped you, a ⭐ is appreciated.
