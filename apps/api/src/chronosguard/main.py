@@ -1,15 +1,30 @@
 """Application factory."""
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from chronosguard import __version__
+from chronosguard.api.health import readiness_checks
 from chronosguard.api.health import router as health_router
 from chronosguard.api.v1 import v1_router
 from chronosguard.core.config import Settings, get_settings
+from chronosguard.core.db import dispose_engines, get_engine, make_db_readiness_check
 from chronosguard.core.errors import register_exception_handlers
 from chronosguard.core.logging import setup_logging
 from chronosguard.core.middleware import RequestContextMiddleware
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    readiness_checks["database"] = make_db_readiness_check(get_engine())
+    try:
+        yield
+    finally:
+        readiness_checks.pop("database", None)
+        await dispose_engines()
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -21,6 +36,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         version=__version__,
         description="Temporal Compliance RAG Engine — audits internal policies against "
         "in-force regulation for a jurisdiction as of a given date.",
+        lifespan=_lifespan,
     )
 
     # Middleware runs in reverse add order: RequestContext wraps CORS wraps routes.

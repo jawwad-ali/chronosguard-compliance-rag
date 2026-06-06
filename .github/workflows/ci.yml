@@ -45,6 +45,19 @@ jobs:
       - name: Pytest (unit lanes)
         run: uv run pytest -m "not integration and not rls and not contract and not eval" --cov --cov-report=term
 
-  # Integration + RLS lanes land in Chunk 1 (testcontainers pgvector).
-  # The RLS lane is BLOCKING from the moment it exists — a cross-tenant leak
-  # is a security incident, not a flaky test.
+  integration:
+    name: Integration + RLS (blocking)
+    runs-on: ubuntu-latest # docker available natively; testcontainers just works
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+      - name: Sync dependencies
+        run: uv sync
+      - name: Pytest (integration + RLS + contract)
+        # The RLS lane is BLOCKING: a cross-tenant leak is a security incident,
+        # not a flaky test. The session fixture also proves migration
+        # reversibility (upgrade -> downgrade -> upgrade) every run.
+        run: uv run pytest -m "integration or rls or contract" -q

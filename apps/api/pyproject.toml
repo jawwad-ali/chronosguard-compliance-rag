@@ -86,6 +86,7 @@ ignore = [
     "PLR2004",  # magic values in assertions are fine
     "S105",     # hardcoded fake credentials in test fixtures
     "S106",
+    "PLC0415",  # lazy imports keep the unit lane Docker-free — intentional
 ]
 "migrations/**" = ["S608"]  # hand-written DDL strings
 
