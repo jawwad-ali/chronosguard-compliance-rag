@@ -1,4 +1,4 @@
-"""Regulatory corpus browse (global, read-only; citation tracing for the UI)."""
+"""Regulatory corpus browse + semantic search (global, read-only)."""
 
 from typing import Annotated
 
@@ -7,12 +7,21 @@ from fastapi import APIRouter, Depends, Query
 from chronosguard.core.errors import NotFoundError
 from chronosguard.core.pagination import Page, PageParamsDep
 from chronosguard.core.tenancy import SCOPE_READ, Principal, SessionDep, require_scope
+from chronosguard.providers import EmbeddingProvider, get_embedding_provider
+from chronosguard.retrieval.temporal import resolve_as_of
 from chronosguard.schemas.regulatory import ChunkOut, DocumentDetail, DocumentSummary
+from chronosguard.schemas.search import (
+    ChunkHit,
+    RegulatorySearchRequest,
+    RegulatorySearchResponse,
+)
 from chronosguard.services import corpus
+from chronosguard.services.search import search_regulations
 
 router = APIRouter(prefix="/regulatory", tags=["regulatory"])
 
 ReadPrincipal = Annotated[Principal, Depends(require_scope(SCOPE_READ))]
+EmbedderDep = Annotated[EmbeddingProvider, Depends(get_embedding_provider)]
 
 
 @router.get(
@@ -59,6 +68,38 @@ async def get_document(
         ingested_at=doc.ingested_at,
         chunk_count=chunk_count,
     )
+
+
+@router.post(
+    "/search",
+    operation_id="search_regulatory",
+    response_model=RegulatorySearchResponse,
+)
+async def search(
+    body: RegulatorySearchRequest,
+    _principal: ReadPrincipal,
+    session: SessionDep,
+    embedder: EmbedderDep,
+) -> RegulatorySearchResponse:
+    as_of = resolve_as_of(body.as_of_date)
+    candidates = await search_regulations(
+        session,
+        embedder,
+        query=body.query,
+        jurisdiction=body.jurisdiction,
+        as_of=as_of,
+        top_k=body.top_k,
+    )
+    items = [
+        ChunkHit(
+            **ChunkOut.model_validate(candidate.chunk).model_dump(),
+            score=None if candidate.distance is None else round(1.0 - candidate.distance, 6),
+            weak_match=candidate.weak_match,
+            source=candidate.source,
+        )
+        for candidate in candidates
+    ]
+    return RegulatorySearchResponse(jurisdiction=body.jurisdiction, as_of_date=as_of, items=items)
 
 
 @router.get(

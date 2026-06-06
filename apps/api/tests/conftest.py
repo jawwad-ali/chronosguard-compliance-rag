@@ -134,10 +134,14 @@ async def seeded_corpus(owner_engine: "AsyncEngine") -> None:
 
 @pytest.fixture
 def api_app(app_engine: "AsyncEngine") -> FastAPI:
-    """The real app wired to the test DB AS cg_app — requests exercise real RLS."""
+    """The real app wired to the test DB AS cg_app — requests exercise real RLS.
+
+    Providers are pinned to deterministic fakes: tests never spend OpenAI money.
+    """
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
     from chronosguard.core.db import get_session
+    from chronosguard.providers import FakeEmbeddings, get_embedding_provider
 
     application = create_app(Settings(log_level="WARNING"))
     maker = async_sessionmaker(app_engine, expire_on_commit=False, autoflush=False)
@@ -152,6 +156,7 @@ def api_app(app_engine: "AsyncEngine") -> FastAPI:
                 raise
 
     application.dependency_overrides[get_session] = override_session
+    application.dependency_overrides[get_embedding_provider] = FakeEmbeddings
     return application
 
 

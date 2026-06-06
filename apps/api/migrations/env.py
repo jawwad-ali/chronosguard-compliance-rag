@@ -35,6 +35,17 @@ def compare_type(
     return None
 
 
+#: Migration-only DDL invisible to model metadata (like RLS policies) —
+#: exempted by name so the drift gate doesn't propose dropping them.
+_MIGRATION_ONLY_INDEXES = {"ix_chunks_embedding_hnsw"}
+
+
+def include_object(
+    obj: Any, name: str | None, type_: str, reflected: bool, compare_to: Any
+) -> bool:
+    return not (type_ == "index" and name in _MIGRATION_ONLY_INDEXES)
+
+
 def _database_url() -> str:
     configured = config.get_main_option("sqlalchemy.url")
     if configured:
@@ -49,6 +60,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=compare_type,
+        include_object=include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -59,6 +71,7 @@ def _run_migrations(connection: Connection) -> None:
         connection=connection,
         target_metadata=target_metadata,
         compare_type=compare_type,
+        include_object=include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
