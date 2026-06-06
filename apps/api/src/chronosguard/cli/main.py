@@ -7,6 +7,7 @@ run inside the API process. Ingestion runs under the worker role.
 
 import asyncio
 import datetime as dt
+import json
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 
@@ -195,6 +196,21 @@ def retry(job_id: int) -> None:
     else:
         typer.echo(f"Job {job_id} is not in a failed state.", err=True)
         raise typer.Exit(code=1)
+
+
+_OPENAPI_OUTPUT_ARG = typer.Argument(Path("../../packages/contracts/openapi.json"))
+
+
+@app.command("export-openapi")
+def export_openapi(output: Path = _OPENAPI_OUTPUT_ARG) -> None:
+    """Export the OpenAPI schema — the frozen contract for the UI and n8n."""
+    from chronosguard.core.config import Settings  # noqa: PLC0415 — keep CLI startup light
+    from chronosguard.main import create_app  # noqa: PLC0415
+
+    schema = create_app(Settings(worker_enabled=False, log_level="WARNING")).openapi()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(schema, indent=2) + "\n", encoding="utf-8")
+    typer.echo(f"OpenAPI schema written to {output}")
 
 
 def main() -> None:

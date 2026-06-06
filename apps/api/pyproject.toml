@@ -19,6 +19,7 @@ dependencies = [
     "openai>=1.60",
     "tenacity>=9.0",
     "pymupdf4llm>=1.27.2.3",
+    "sentry-sdk[fastapi]>=2.0",
 ]
 
 [dependency-groups]

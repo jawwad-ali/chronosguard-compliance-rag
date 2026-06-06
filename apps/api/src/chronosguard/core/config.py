@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     db_pool_size: int = 5
     db_max_overflow: int = 5
     db_pool_recycle_seconds: int = 300
+    # Sum of all pools must fit the Neon tier ceiling — asserted at startup.
+    db_connection_budget: int = 60
 
     cors_origins: list[str] = ["http://localhost:3000"]
 

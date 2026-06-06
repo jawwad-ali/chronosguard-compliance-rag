@@ -1,0 +1,37 @@
+# Render blueprint — ChronosGuard API (docs/ARCHITECTURE.md §8.2).
+# Database lives on Neon (pgvector + PITR + branching); Render runs the API
+# with the in-process worker. Pre-deploy migrations run as cg_owner; the
+# runtime connects as cg_app / cg_worker (least privilege, RLS-bound).
+#
+# One-time setup (docs/runbooks/deploy.md): create the Neon project, run the
+# role-provisioning SQL, then fill the env group below from Neon + OpenAI.
+
+services:
+  - type: web
+    name: chronosguard-api
+    runtime: python
+    plan: starter # always-on: the in-process worker must not sleep
+    rootDir: apps/api
+    buildCommand: pip install uv && uv sync --frozen --no-dev
+    preDeployCommand: uv run alembic upgrade head # runs with DATABASE_URL_OWNER via env
+    startCommand: uv run uvicorn chronosguard.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /readyz
+    envVars:
+      - key: ENV
+        value: prod
+      - key: AI_PROVIDER
+        value: openai
+      - key: OPENAI_API_KEY
+        sync: false # set in dashboard — never in the blueprint
+      - key: DATABASE_URL
+        sync: false # postgresql+asyncpg://cg_app:…@<neon-direct-host>/chronosguard
+      - key: DATABASE_URL_WORKER
+        sync: false # postgresql+asyncpg://cg_worker:…@<neon-direct-host>/chronosguard
+      - key: DATABASE_URL_OWNER
+        sync: false # postgresql+asyncpg://cg_owner:…@<neon-direct-host>/chronosguard
+      - key: API_KEY_PEPPER
+        generateValue: true
+      - key: SENTRY_DSN
+        sync: false
+      - key: CORS_ORIGINS
+        value: '["https://app.example.com"]' # the Phase-2 UI origin

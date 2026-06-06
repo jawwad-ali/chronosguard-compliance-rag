@@ -83,8 +83,51 @@ infra/               docker-compose (local Postgres), render.yaml (PaaS)
 docs/                ARCHITECTURE.md · ROADMAP.md · runbooks
 ```
 
+## See it work (the PocketPay demo)
+
+The same policy text audited at two points in time returns different verdicts — because the
+law changed underneath it:
+
+```text
+POST /api/v1/audits  {"policy_text": "PocketPay will hold user funds for up to
+                       7 business days before clearing. …",
+                      "jurisdiction": "PK", "as_of_date": "2026-06-06"}
+→ 202 → poll →  verdict: VIOLATIONS_FOUND
+   finding[HIGH]  Regulation 12-B(4) (as amended) — SECP SRO 1234(I)/2026
+   quote: "…must settle transit funds within a strict maximum window of
+           three (3) business days."
+   fix:   Reduce the holding window to 3 business days.
+
+same request with "as_of_date": "2025-01-01"
+→ verdict: COMPLIANT          (the old 7-day rule governed then)
+```
+
+Every finding carries a server-verified verbatim quote, a DB-sourced citation and source URL
+(the LLM cannot fabricate either), and a `needs_review` flag when retrieval confidence was weak.
+
+## Engineering highlights
+
+- **Temporal correctness as code**: one canonical `as_of_predicate()` with an 8-case
+  truth-table test (half-open intervals, amendment-day swaps, retroactive effectivity,
+  review-gate exclusion)
+- **Postgres RLS multi-tenancy** proven by a blocking CI lane — cross-tenant SELECT/INSERT
+  isolation, fail-closed missing-context, and the background-worker write path
+- **Hallucination defenses**: strict structured outputs + quote-grounding hard gate
+  (ungrounded findings are dropped and counted as the canary metric)
+- **Honest verdicts**: zero retrieved law ⇒ `INSUFFICIENT_EVIDENCE`, clause errors ⇒
+  `partial` (never a false green check); retroactive amendments flag stored verdicts `stale`
+- **Ingestion quarantine**: scanned PDFs, Urdu-primary documents, prompt-injection patterns,
+  and structureless extractions are review-gated — quarantined text can never reach an audit
+- **Ops**: Postgres-backed job queue (SKIP LOCKED + lease + reaper), per-call AI cost
+  telemetry, circuit-breaker 503 on provider outage, OpenAPI contract freeze, Sentry with
+  confidentiality scrubbing
+- **300+ assertions across 174 tests** in five lanes (unit / integration / RLS / contract /
+  eval) — CI spends $0 on AI
+
 ## Status
 
-Phase 1 (backend core) in progress — see [docs/ROADMAP.md](docs/ROADMAP.md) for chunk-by-chunk
-acceptance gates. UI (Next.js) and ingestion automation (n8n) are Phase 2; their API contracts
-are frozen in Phase 1.
+**Phase 1 (backend core): complete** — all eight roadmap chunks landed with their acceptance
+gates green ([docs/ROADMAP.md](docs/ROADMAP.md)). Deploy config for Neon + Render is in
+[infra/render.yaml](infra/render.yaml) with runbooks in [docs/runbooks/](docs/runbooks/).
+Phase 2 (Next.js audit dashboard, n8n nightly monitor) builds against the frozen contract in
+[packages/contracts/openapi.json](packages/contracts/openapi.json).

@@ -21,13 +21,35 @@ from chronosguard.core.db import (
 from chronosguard.core.errors import register_exception_handlers
 from chronosguard.core.logging import setup_logging
 from chronosguard.core.middleware import RequestContextMiddleware
+from chronosguard.core.sentry import setup_sentry
 from chronosguard.providers import get_chat_provider, get_embedding_provider
 from chronosguard.worker.runner import Worker
+
+#: API pool + overflow + worker pool + overflow (core/db.py) + CLI headroom.
+_WORKER_POOL_CONNECTIONS = 4
+_CLI_HEADROOM_CONNECTIONS = 4
+
+
+def _assert_connection_budget(settings: Settings) -> None:
+    planned = (
+        settings.db_pool_size
+        + settings.db_max_overflow
+        + _WORKER_POOL_CONNECTIONS
+        + _CLI_HEADROOM_CONNECTIONS
+    )
+    if planned > settings.db_connection_budget:
+        msg = (
+            f"Connection plan ({planned}) exceeds DB_CONNECTION_BUDGET "
+            f"({settings.db_connection_budget}) — lower pool sizes or raise the budget "
+            "to match the Neon tier ceiling."
+        )
+        raise ValueError(msg)
 
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
+    _assert_connection_budget(settings)
     readiness_checks["database"] = make_db_readiness_check(get_engine())
 
     worker_task: asyncio.Task[None] | None = None
@@ -55,6 +77,7 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     setup_logging(settings)
+    setup_sentry(settings)
 
     app = FastAPI(
         title=settings.app_name,

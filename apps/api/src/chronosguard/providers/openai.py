@@ -26,6 +26,7 @@ from tenacity import (
 from chronosguard.core.errors import ProviderError
 from chronosguard.models import EMBEDDING_DIMS
 from chronosguard.providers.base import TokenUsage
+from chronosguard.providers.health import chat_health
 from chronosguard.providers.pricing import chat_cost_usd, embedding_cost_usd
 
 logger = structlog.get_logger(__name__)
@@ -80,13 +81,24 @@ class OpenAIChat:
         self.model = model
         self._client = client or AsyncOpenAI(api_key=api_key, timeout=_REQUEST_TIMEOUT_SECONDS)
 
+    async def complete_structured[T: BaseModel](
+        self, *, system: str, user: str, response_model: type[T]
+    ) -> tuple[T, TokenUsage]:
+        try:
+            result = await self._complete(system=system, user=user, response_model=response_model)
+        except Exception:
+            chat_health.record_failure()  # one strike per fully-exhausted call
+            raise
+        chat_health.record_success()
+        return result
+
     @retry(
         retry=retry_if_exception_type(_RETRYABLE),
         stop=stop_after_attempt(3),
         wait=wait_exponential_jitter(initial=1, max=8),
         reraise=True,
     )
-    async def complete_structured[T: BaseModel](
+    async def _complete[T: BaseModel](
         self, *, system: str, user: str, response_model: type[T]
     ) -> tuple[T, TokenUsage]:
         started = time.perf_counter()

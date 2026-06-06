@@ -7,7 +7,8 @@ from sqlalchemy import func, select
 from sqlmodel import col
 
 from chronosguard.audit.service import create_audit_run
-from chronosguard.core.errors import NotFoundError
+from chronosguard.core.config import get_settings
+from chronosguard.core.errors import NotFoundError, ServiceUnavailableError
 from chronosguard.core.pagination import Page, PageParamsDep
 from chronosguard.core.tenancy import (
     SCOPE_AUDIT,
@@ -17,6 +18,7 @@ from chronosguard.core.tenancy import (
     require_scope,
 )
 from chronosguard.models import AuditFinding, AuditRun
+from chronosguard.providers.health import chat_health
 from chronosguard.schemas.audit import AuditCreate, AuditRunOut, FindingOut
 
 router = APIRouter(prefix="/audits", tags=["audits"])
@@ -37,6 +39,10 @@ async def create_audit(
     session: TenantSessionDep,
     response: Response,
 ) -> AuditRunOut:
+    # Degrade loudly: with the AI provider down, refuse work that would
+    # immediately dead-letter rather than queueing it (circuit breaker).
+    if get_settings().ai_provider == "openai" and chat_health.is_open:
+        raise ServiceUnavailableError("AI provider temporarily unavailable; retry shortly")
     run = await create_audit_run(session, tenant_id=principal.tenant_id, body=body)
     response.headers["Location"] = f"/api/v1/audits/{run.id}"
     return AuditRunOut.model_validate(run)

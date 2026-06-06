@@ -1,0 +1,35 @@
+name: Quality Evals
+
+# Non-blocking quality lane (docs/ARCHITECTURE.md §8.1): golden-set retrieval
+# recall/MRR + audit verdict accuracy. Runs on demand; add a schedule when the
+# golden set is big enough to need a nightly regression signal.
+
+on:
+  workflow_dispatch:
+    inputs:
+      live:
+        description: "Run against real OpenAI (costs cents)"
+        type: boolean
+        default: false
+
+defaults:
+  run:
+    working-directory: apps/api
+
+jobs:
+  eval:
+    name: Golden-set evals
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+      - name: Sync dependencies
+        run: uv sync
+      - name: Run evals
+        env:
+          CG_EVAL_LIVE: ${{ inputs.live && '1' || '0' }}
+          OPENAI_API_KEY: ${{ inputs.live && secrets.OPENAI_API_KEY || '' }}
+        run: uv run pytest -m eval -s
