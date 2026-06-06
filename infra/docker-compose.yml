@@ -1,0 +1,22 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: chronosguard-db
+    environment:
+      # cg_owner is the migration/bootstrap role. Runtime roles (cg_app, cg_worker)
+      # are created BY migrations with least privilege — see docs/ARCHITECTURE.md §3.5.
+      POSTGRES_USER: cg_owner
+      POSTGRES_PASSWORD: cg_owner_dev_password
+      POSTGRES_DB: chronosguard
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cg_owner -d chronosguard"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

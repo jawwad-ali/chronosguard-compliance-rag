@@ -1,0 +1,118 @@
+[project]
+name = "chronosguard-api"
+version = "0.1.0"
+description = "ChronosGuard Compliance — Temporal Compliance RAG Engine (FastAPI backend)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "structlog>=24.4",
+    "sqlmodel>=0.0.22",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    "pgvector>=0.3.6",
+    "typer>=0.15",
+    "httpx>=0.28",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "anyio>=4.6",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "testcontainers[postgres]>=4.8",
+    "poethepoet>=0.30",
+    "pre-commit>=4.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chronosguard"]
+
+# ── Task runner ──────────────────────────────────────────────────────────────
+[tool.poe.tasks]
+up = "docker compose -f ../../infra/docker-compose.yml up -d --wait"
+down = "docker compose -f ../../infra/docker-compose.yml down"
+api = "uvicorn chronosguard.main:app --reload --port 8000"
+lint = ["_ruff-check", "_ruff-format-check"]
+fmt = ["_ruff-fix", "_ruff-format"]
+types = "mypy src"
+test = "pytest -m 'not integration and not rls and not contract and not eval'"
+test-all = "pytest -m 'not eval'"
+test-rls = "pytest -m rls"
+migrate = "alembic upgrade head"
+revise = "alembic revision --autogenerate -m"
+_ruff-check = "ruff check ."
+_ruff-format-check = "ruff format --check ."
+_ruff-fix = "ruff check --fix ."
+_ruff-format = "ruff format ."
+
+# ── Lint ─────────────────────────────────────────────────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "I",      # isort
+    "UP",     # pyupgrade
+    "B",      # bugbear
+    "SIM",    # simplify
+    "ASYNC",  # async pitfalls
+    "S",      # bandit security
+    "RUF",    # ruff-specific
+    "TID",    # tidy imports
+    "PL",     # pylint
+]
+ignore = [
+    "PLR0913",  # many-args: FastAPI dependency signatures are wide by design
+    "PLR0911",  # many-returns: rollup/dispatch functions
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "S101",     # assert is the point of tests
+    "PLR2004",  # magic values in assertions are fine
+    "S105",     # hardcoded fake credentials in test fixtures
+    "S106",
+]
+"migrations/**" = ["S608"]  # hand-written DDL strings
+
+# ── Types ────────────────────────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+mypy_path = "src"
+packages = ["chronosguard"]
+warn_unreachable = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = ["pgvector.*", "testcontainers.*"]
+ignore_missing_imports = true
+
+# ── Tests ────────────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers"
+testpaths = ["tests"]
+markers = [
+    "integration: requires a real Postgres (testcontainers)",
+    "rls: cross-tenant isolation proofs (blocking security lane)",
+    "contract: OpenAPI snapshot drift",
+    "eval: golden-set quality evals (manual, real OpenAI, costs money)",
+]
+
+[tool.coverage.run]
+source = ["src/chronosguard"]
