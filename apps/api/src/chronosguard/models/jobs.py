@@ -52,9 +52,7 @@ class Job(SQLModel, table=True):
     kind: str = Field(max_length=16)  # JobKind
     # audit_runs.id | regulatory_documents.id
     ref_id: int | None = Field(default=None, sa_type=BigInteger)
-    tenant_id: int | None = Field(
-        default=None, foreign_key="organizations.id", sa_type=BigInteger
-    )
+    tenant_id: int | None = Field(default=None, foreign_key="organizations.id", sa_type=BigInteger)
     status: str = Field(default=JobStatus.QUEUED.value, max_length=16, index=True)
     payload: dict[str, Any] = Field(
         default_factory=dict,

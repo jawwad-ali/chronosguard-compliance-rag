@@ -21,17 +21,18 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     app_name: str = "ChronosGuard Compliance API"
 
-    # Request path: least-privilege, RLS-bound role.
+    # Request path: least-privilege, RLS-bound role. (Host port 5433 locally —
+    # see infra/docker-compose.yml — to avoid colliding with other Postgres installs.)
     database_url: str = (
-        "postgresql+asyncpg://cg_app:cg_app_dev_password@localhost:5432/chronosguard"
+        "postgresql+asyncpg://cg_app:cg_app_dev_password@localhost:5433/chronosguard"
     )
     # Worker/CLI path: corpus writes + per-job tenant context.
     database_url_worker: str = (
-        "postgresql+asyncpg://cg_worker:cg_worker_dev_password@localhost:5432/chronosguard"
+        "postgresql+asyncpg://cg_worker:cg_worker_dev_password@localhost:5433/chronosguard"
     )
     # Migrations only.
     database_url_owner: str = (
-        "postgresql+asyncpg://cg_owner:cg_owner_dev_password@localhost:5432/chronosguard"
+        "postgresql+asyncpg://cg_owner:cg_owner_dev_password@localhost:5433/chronosguard"
     )
 
     db_pool_size: int = 5

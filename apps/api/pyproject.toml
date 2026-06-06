@@ -30,6 +30,9 @@ dev = [
     "pre-commit>=4.0",
 ]
 
+[project.scripts]
+chronos = "chronosguard.cli.main:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

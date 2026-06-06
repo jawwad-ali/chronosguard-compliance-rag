@@ -9,7 +9,8 @@ services:
       POSTGRES_PASSWORD: cg_owner_dev_password
       POSTGRES_DB: chronosguard
     ports:
-      - "5432:5432"
+      # 5433 on the host: avoids colliding with any locally installed Postgres
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db-init:/docker-entrypoint-initdb.d:ro
