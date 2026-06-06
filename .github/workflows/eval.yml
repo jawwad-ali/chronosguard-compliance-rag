@@ -1,6 +1,6 @@
-name: Quality Evals
+﻿name: Quality Evals
 
-# Non-blocking quality lane (docs/ARCHITECTURE.md §8.1): golden-set retrieval
+# Non-blocking quality lane (docs/ARCHITECTURE.md Â§8.1): golden-set retrieval
 # recall/MRR + audit verdict accuracy. Runs on demand; add a schedule when the
 # golden set is big enough to need a nightly regression signal.
 
@@ -21,8 +21,8 @@ jobs:
     name: Golden-set evals
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
           cache-dependency-glob: apps/api/uv.lock
