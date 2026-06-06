@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter
 
+from chronosguard.api.v1.admin import router as admin_router
 from chronosguard.api.v1.audits import router as audits_router
 from chronosguard.api.v1.me import router as me_router
 from chronosguard.api.v1.policies import router as policies_router
@@ -12,5 +13,4 @@ v1_router.include_router(me_router)
 v1_router.include_router(regulatory_router)
 v1_router.include_router(policies_router)
 v1_router.include_router(audits_router)
-
-# Routers are included as chunks land:  C7: admin (ingestion)
+v1_router.include_router(admin_router)

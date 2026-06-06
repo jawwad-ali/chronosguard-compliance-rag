@@ -18,6 +18,7 @@ dependencies = [
     "httpx>=0.28",
     "openai>=1.60",
     "tenacity>=9.0",
+    "pymupdf4llm>=1.27.2.3",
 ]
 
 [dependency-groups]
@@ -92,6 +93,7 @@ ignore = [
     "S105",     # hardcoded fake credentials in test fixtures
     "S106",
     "PLC0415",  # lazy imports keep the unit lane Docker-free — intentional
+    "RUF001",   # Urdu/Arabic-script fixtures are the point of those tests
 ]
 "migrations/**" = ["S608"]  # hand-written DDL strings
 

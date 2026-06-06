@@ -19,7 +19,11 @@ class TestDocumentListing:
     async def test_lists_only_confirmed_documents(
         self, seeded_corpus: None, api: AsyncClient, read_key: str
     ) -> None:
-        response = await api.get("/api/v1/regulatory/documents", headers={"X-API-Key": read_key})
+        response = await api.get(
+            "/api/v1/regulatory/documents",
+            params={"jurisdiction": "PK"},  # ingestion tests add SG docs
+            headers={"X-API-Key": read_key},
+        )
         assert response.status_code == 200
         body = response.json()
         assert body["total"] == 5  # six seeded, one in review
@@ -43,7 +47,7 @@ class TestDocumentListing:
     ) -> None:
         response = await api.get(
             "/api/v1/regulatory/documents",
-            params={"limit": 2, "offset": 2},
+            params={"limit": 2, "offset": 2, "jurisdiction": "PK"},
             headers={"X-API-Key": read_key},
         )
         body = response.json()

@@ -12,12 +12,16 @@ import asyncio
 import contextlib
 import datetime as dt
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 import structlog
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from chronosguard.audit.service import execute_audit_run
+from chronosguard.ingestion.fetch import fetch_document
+from chronosguard.ingestion.service import IngestHints, ingest_bytes, ingest_markdown
 from chronosguard.models import JobKind, RunStatus
 from chronosguard.providers.base import ChatProvider, EmbeddingProvider
 
@@ -36,7 +40,7 @@ _CLAIM_SQL = text(
         FOR UPDATE SKIP LOCKED
         LIMIT 1
     )
-    RETURNING id, kind, ref_id, tenant_id, attempts, max_attempts
+    RETURNING id, kind, ref_id, tenant_id, attempts, max_attempts, payload
     """
 )
 
@@ -71,6 +75,7 @@ class ClaimedJob:
     tenant_id: int | None
     attempts: int
     max_attempts: int
+    payload: dict[str, Any]
 
 
 class Worker:
@@ -102,14 +107,57 @@ class Worker:
             tenant_id=row["tenant_id"],
             attempts=row["attempts"],
             max_attempts=row["max_attempts"],
+            payload=row["payload"] or {},
         )
 
     async def _execute(self, job: ClaimedJob) -> None:
         if job.kind == JobKind.AUDIT.value:
             await self._execute_audit(job)
+        elif job.kind == JobKind.INGEST.value:
+            await self._execute_ingest(job)
         else:
             msg = f"Unknown job kind: {job.kind}"
             raise ValueError(msg)
+
+    async def _execute_ingest(self, job: ClaimedJob) -> None:
+        """Global-corpus work — tenant-agnostic by design (no tenant context)."""
+        payload = job.payload
+        hints = IngestHints(
+            source_url=payload["source_url"],
+            title=payload["title"],
+            issuing_body=payload["issuing_body"],
+            document_type=payload["document_type"],
+            jurisdiction=payload["jurisdiction"],
+            published_date=dt.date.fromisoformat(payload["published_date"]),
+            source_etag=payload.get("source_etag"),
+        )
+        async with self._maker() as session:
+            if "file_path" in payload:  # CLI/dev path: local file, .md or .pdf
+                path = Path(payload["file_path"])
+                if path.suffix.lower() == ".md":
+                    markdown = await asyncio.to_thread(path.read_text, encoding="utf-8")
+                    outcome = await ingest_markdown(
+                        session, self._embedder, markdown=markdown, hints=hints
+                    )
+                else:
+                    content = await asyncio.to_thread(path.read_bytes)
+                    outcome = await ingest_bytes(
+                        session, self._embedder, content=content, hints=hints
+                    )
+            else:
+                fetched = await fetch_document(payload["source_url"])
+                outcome = await ingest_bytes(
+                    session,
+                    self._embedder,
+                    content=fetched.content,
+                    hints=IngestHints(**{**hints.__dict__, "source_etag": fetched.etag}),
+                )
+            # Link the job to the produced document for the n8n status poll.
+            await session.execute(
+                text("UPDATE jobs SET ref_id = :doc_id WHERE id = :job_id"),
+                {"doc_id": outcome.document_id, "job_id": job.id},
+            )
+            await session.commit()
 
     async def _execute_audit(self, job: ClaimedJob) -> None:
         if job.ref_id is None or job.tenant_id is None:
@@ -186,9 +234,7 @@ class Worker:
         """Recover jobs orphaned by a crashed worker (expired lease)."""
         async with self._maker() as session:
             rows = (
-                await session.execute(
-                    _REAP_SQL, {"lease_seconds": LEASE_TIMEOUT.total_seconds()}
-                )
+                await session.execute(_REAP_SQL, {"lease_seconds": LEASE_TIMEOUT.total_seconds()})
             ).fetchall()
             await session.commit()
         if rows:
