@@ -1,6 +1,6 @@
 ﻿name: Quality Evals
 
-# Non-blocking quality lane (docs/ARCHITECTURE.md Â§8.1): golden-set retrieval
+# Non-blocking quality lane (docs/ARCHITECTURE.md §8.1): golden-set retrieval
 # recall/MRR + audit verdict accuracy. Runs on demand; add a schedule when the
 # golden set is big enough to need a nightly regression signal.
 
