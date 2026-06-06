@@ -7,6 +7,7 @@ re-uses these definitions, avoiding SQLModel duplicate-table errors.
 
 from chronosguard.models import base  # noqa: F401  (naming convention side effect)
 from chronosguard.models.jobs import Job, JobKind, JobStatus
+from chronosguard.models.policy import OrgPolicy, OrgPolicyVersion
 from chronosguard.models.reference import Jurisdiction
 from chronosguard.models.regulatory import (
     EMBEDDING_DIMS,
@@ -28,6 +29,8 @@ __all__ = [
     "JobKind",
     "JobStatus",
     "Jurisdiction",
+    "OrgPolicy",
+    "OrgPolicyVersion",
     "Organization",
     "RegulatoryChunk",
     "RegulatoryDocument",
