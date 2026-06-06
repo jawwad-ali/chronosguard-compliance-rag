@@ -1,0 +1,220 @@
+@import "tailwindcss";
+
+/* ────────────────────────────────────────────────────────────────────────────
+   ChronosGuard — "The Gazette Ledger" design system
+   Warm-paper light theme. Charcoal blue is the ink, verdigris the action,
+   tuscan → sandy → burnt-peach the risk ladder. Poppins everywhere.
+──────────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Palette — first-class tokens */
+  --color-charcoal-100: #080e11;
+  --color-charcoal-200: #0f1c22;
+  --color-charcoal-300: #172b32;
+  --color-charcoal-400: #1f3943;
+  --color-charcoal-500: #264653;
+  --color-charcoal-600: #3f7489;
+  --color-charcoal-700: #609db6;
+  --color-charcoal-800: #95bece;
+  --color-charcoal-900: #cadee7;
+
+  --color-verdigris-100: #081f1d;
+  --color-verdigris-200: #113f39;
+  --color-verdigris-300: #195e56;
+  --color-verdigris-400: #217e73;
+  --color-verdigris-500: #2a9d8f;
+  --color-verdigris-600: #3acbba;
+  --color-verdigris-700: #6cd8cb;
+  --color-verdigris-800: #9de5dc;
+  --color-verdigris-900: #cef2ee;
+
+  --color-tuscan-100: #3b2c09;
+  --color-tuscan-200: #755912;
+  --color-tuscan-300: #b0851a;
+  --color-tuscan-400: #e0ad2e;
+  --color-tuscan-500: #e9c46a;
+  --color-tuscan-600: #edd086;
+  --color-tuscan-700: #f1dca4;
+  --color-tuscan-800: #f6e7c3;
+  --color-tuscan-900: #faf3e1;
+
+  --color-sandy-100: #401f04;
+  --color-sandy-200: #803e09;
+  --color-sandy-300: #c05e0d;
+  --color-sandy-400: #f07e22;
+  --color-sandy-500: #f4a261;
+  --color-sandy-600: #f6b681;
+  --color-sandy-700: #f8c8a1;
+  --color-sandy-800: #fbdac0;
+  --color-sandy-900: #fdede0;
+
+  --color-peach-100: #371107;
+  --color-peach-200: #6e220f;
+  --color-peach-300: #a43316;
+  --color-peach-400: #db441e;
+  --color-peach-500: #e76f51;
+  --color-peach-600: #ec8b73;
+  --color-peach-700: #f1a896;
+  --color-peach-800: #f5c5b9;
+  --color-peach-900: #fae2dc;
+
+  /* Typography */
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+
+  /* Semantic tokens (shadcn contract) — all palette-derived */
+  --color-background: #faf3e1; /* tuscan-900: the paper */
+  --color-foreground: #1f3943; /* charcoal-400: the ink */
+  --color-card: #fffdf6; /* lifted paper sheet */
+  --color-card-foreground: #1f3943;
+  --color-popover: #fffdf6;
+  --color-popover-foreground: #1f3943;
+  --color-primary: #217e73; /* verdigris-400: action ink */
+  --color-primary-foreground: #fffdf6;
+  --color-secondary: #f6e7c3; /* tuscan-800 */
+  --color-secondary-foreground: #172b32;
+  --color-muted: color-mix(in oklab, #264653 6%, #faf3e1);
+  --color-muted-foreground: #3f7489; /* charcoal-600 */
+  --color-accent: #cef2ee; /* verdigris-900 wash */
+  --color-accent-foreground: #195e56;
+  --color-destructive: #db441e; /* peach-400 */
+  --color-destructive-foreground: #fffdf6;
+  --color-border: color-mix(in oklab, #264653 16%, #faf3e1);
+  --color-input: color-mix(in oklab, #264653 22%, #faf3e1);
+  --color-ring: #2a9d8f;
+
+  /* Verdict + risk semantics */
+  --color-verdict-compliant: #217e73;
+  --color-verdict-violation: #db441e;
+  --color-verdict-insufficient: #b0851a;
+  --color-risk-high: #db441e;
+  --color-risk-medium: #c05e0d;
+  --color-risk-low: #b0851a;
+
+  --shadow-sheet:
+    0 1px 2px rgb(38 70 83 / 0.06), 0 4px 16px -4px rgb(38 70 83 / 0.1);
+  --shadow-sheet-hover:
+    0 2px 4px rgb(38 70 83 / 0.08), 0 10px 28px -6px rgb(38 70 83 / 0.16);
+
+  --animate-stamp: stamp 360ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  --animate-rise: rise 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes stamp {
+    0% {
+      opacity: 0;
+      transform: rotate(var(--stamp-rotate, -4deg)) scale(1.6);
+    }
+    100% {
+      opacity: 1;
+      transform: rotate(var(--stamp-rotate, -4deg)) scale(1);
+    }
+  }
+  @keyframes rise {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* shadcn structural variables (consumed by ui components) */
+:root {
+  --radius: 0.5rem;
+  --background: var(--color-background);
+  --foreground: var(--color-foreground);
+  --card: var(--color-card);
+  --card-foreground: var(--color-card-foreground);
+  --popover: var(--color-popover);
+  --popover-foreground: var(--color-popover-foreground);
+  --primary: var(--color-primary);
+  --primary-foreground: var(--color-primary-foreground);
+  --secondary: var(--color-secondary);
+  --secondary-foreground: var(--color-secondary-foreground);
+  --muted: var(--color-muted);
+  --muted-foreground: var(--color-muted-foreground);
+  --accent: var(--color-accent);
+  --accent-foreground: var(--color-accent-foreground);
+  --destructive: var(--color-destructive);
+  --destructive-foreground: var(--color-destructive-foreground);
+  --border: var(--color-border);
+  --input: var(--color-input);
+  --ring: var(--color-ring);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+  }
+
+  /* Paper grain — the atmosphere layer */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  ::selection {
+    background-color: var(--color-verdigris-800);
+    color: var(--color-charcoal-300);
+  }
+}
+
+@layer components {
+  /* Uppercase editorial label — the ledger's voice */
+  .ledger-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+  }
+
+  /* Dotted leader rows, like a legal table of contents */
+  .ledger-leader {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .ledger-leader::after {
+    content: "";
+    order: 1;
+    flex: 1;
+    border-bottom: 1.5px dotted color-mix(in oklab, #264653 28%, transparent);
+    transform: translateY(-0.3em);
+  }
+  .ledger-leader > :last-child {
+    order: 2;
+  }
+
+  /* Legal-pad margin rule for primary content sheets */
+  .sheet-margin {
+    position: relative;
+  }
+  .sheet-margin::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 1.25rem;
+    width: 1px;
+    background: color-mix(in oklab, var(--color-peach-500) 35%, transparent);
+  }
+}

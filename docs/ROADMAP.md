@@ -12,6 +12,8 @@ C0 bootstrap ─▶ C1 DB+RLS ─▶ C2 auth ─▶ C3 corpus+temporal ─▶ C4
 
 ---
 
+
+
 ## Chunk 0 — Repo bootstrap & walking skeleton
 
 **Win:** fresh clone → one command → running API + green CI.

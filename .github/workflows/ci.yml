@@ -45,6 +45,28 @@ jobs:
       - name: Pytest (unit lanes)
         run: uv run pytest -m "not integration and not rls and not contract and not eval" --cov --cov-report=term
 
+  web:
+    name: Web (lint, types, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+
   integration:
     name: Integration + RLS (blocking)
     runs-on: ubuntu-latest # docker available natively; testcontainers just works

@@ -1,9 +1,26 @@
 # ChronosGuard Compliance — agent guide
 
 Temporal Compliance RAG Engine. FastAPI backend in `apps/api` (src layout,
-package `chronosguard`). **`docs/ARCHITECTURE.md` is the source of truth**;
-deviations from `project-document.md` are recorded in its §12. Build plan +
-acceptance gates: `docs/ROADMAP.md`. Ops: `docs/runbooks/`.
+package `chronosguard`); Next.js 16 dashboard in `apps/web` ("Gazette Ledger"
+design system — Poppins + the charcoal/verdigris/tuscan/sandy/peach palette
+in `src/app/globals.css`; brand components in `src/components/brand`).
+**`docs/ARCHITECTURE.md` is the source of truth**; deviations from
+`project-document.md` are recorded in its §12. Build plan + acceptance gates:
+`docs/ROADMAP.md`. Ops: `docs/runbooks/`.
+
+## Web commands (run from `apps/web`)
+
+```powershell
+npm install; copy .env.local.example .env.local
+npm run dev            # http://localhost:3000 (backend must run on :8000)
+npm run lint; npx tsc --noEmit; npm run build   # the gates
+```
+
+Web rules: API key lives in an httpOnly cookie; ALL browser calls go through
+the `/api/cg/[...path]` proxy (never the backend origin). Next 16 — read
+`node_modules/next/dist/docs/` before using unfamiliar APIs. Colors only via
+theme tokens (`charcoal-*`, `verdigris-*`, `tuscan-*`, `sandy-*`, `peach-*`,
+or semantic `bg-card`/`text-muted-foreground`); never raw hex/gray classes.
 
 ## Commands (run from `apps/api`)
 
