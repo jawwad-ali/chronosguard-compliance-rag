@@ -14,6 +14,7 @@ from chronosguard.cli.provision import (
     create_jurisdiction,
     create_organization,
 )
+from chronosguard.cli.seed import seed_with_default_engine
 
 app = typer.Typer(help="ChronosGuard operator CLI", no_args_is_help=True)
 jurisdictions_app = typer.Typer(help="Manage jurisdiction codes", no_args_is_help=True)
@@ -60,6 +61,13 @@ def keys_create(
     full_key = _run(create_api_key(org_id=org_id, name=name, scopes=scope_list))
     typer.echo("API key created. Store it now — it cannot be recovered:")
     typer.echo(full_key)
+
+
+@app.command("seed")
+def seed() -> None:
+    """Load the development corpus (idempotent; fake embeddings, zero spend)."""
+    inserted = _run(seed_with_default_engine())
+    typer.echo(f"Seed complete: {inserted} new document(s).")
 
 
 def main() -> None:

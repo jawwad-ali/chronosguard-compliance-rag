@@ -6,8 +6,10 @@ run as ``cg_owner``; runtime roles never perform DDL.
 """
 
 import asyncio
+from typing import Any
 
 from alembic import context
+from pgvector.sqlalchemy import Vector
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel
@@ -17,6 +19,20 @@ from chronosguard.core.config import get_settings
 
 config = context.config
 target_metadata = SQLModel.metadata
+
+
+def compare_type(
+    migration_context: Any,
+    inspected_column: Any,
+    metadata_column: Any,
+    inspected_type: Any,
+    metadata_type: Any,
+) -> bool | None:
+    # pgvector's Vector reflects in ways the default comparator misreads —
+    # treat declared Vector columns as unchanged; everything else uses the default.
+    if isinstance(metadata_type, Vector):
+        return False
+    return None
 
 
 def _database_url() -> str:
@@ -32,7 +48,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        compare_type=True,
+        compare_type=compare_type,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -42,7 +58,7 @@ def _run_migrations(connection: Connection) -> None:
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
-        compare_type=True,
+        compare_type=compare_type,
     )
     with context.begin_transaction():
         context.run_migrations()

@@ -2,70 +2,17 @@
 
 The app's session dependency is overridden to connect as cg_app against the
 test container — the same least-privilege role production uses, so these
-requests exercise real RLS, not a simulation of it.
+requests exercise real RLS, not a simulation of it. (Fixtures: tests/conftest.py.)
 """
 
-from collections.abc import AsyncIterator
-
 import pytest
-from fastapi import FastAPI
-from httpx import ASGITransport, AsyncClient
+from httpx import AsyncClient
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine
 
-from chronosguard.core.config import Settings
-from chronosguard.core.db import get_session
-from chronosguard.core.security import generate_api_key
-from chronosguard.main import create_app
+from tests.conftest import issue_key as _issue_key
 
 pytestmark = [pytest.mark.integration, pytest.mark.anyio]
-
-
-@pytest.fixture
-def api_app(app_engine: AsyncEngine) -> FastAPI:
-    application = create_app(Settings(log_level="WARNING"))
-    maker = async_sessionmaker(app_engine, expire_on_commit=False, autoflush=False)
-
-    async def override_session() -> AsyncIterator[AsyncSession]:
-        async with maker() as session:
-            try:
-                yield session
-                await session.commit()
-            except Exception:
-                await session.rollback()
-                raise
-
-    application.dependency_overrides[get_session] = override_session
-    return application
-
-
-@pytest.fixture
-async def api(api_app: FastAPI) -> AsyncIterator[AsyncClient]:
-    transport = ASGITransport(app=api_app, raise_app_exceptions=False)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        yield client
-
-
-async def _issue_key(
-    owner_engine: AsyncEngine, org_id: int, scopes: list[str], *, revoked: bool = False
-) -> str:
-    generated = generate_api_key("local")  # default pepper — same one the app verifies with
-    async with owner_engine.begin() as conn:
-        await conn.execute(
-            text(
-                "INSERT INTO api_keys (tenant_id, prefix, key_hash, name, scopes, revoked_at) "
-                "VALUES (:tid, :prefix, :hash, 'test', :scopes, "
-                "CASE WHEN :revoked THEN now() ELSE NULL END)"
-            ),
-            {
-                "tid": org_id,
-                "prefix": generated.prefix,
-                "hash": generated.key_hash,
-                "scopes": scopes,
-                "revoked": revoked,
-            },
-        )
-    return generated.full_key
 
 
 class TestAuthFailures:
