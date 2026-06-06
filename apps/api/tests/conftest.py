@@ -143,7 +143,8 @@ def api_app(app_engine: "AsyncEngine") -> FastAPI:
     from chronosguard.core.db import get_session
     from chronosguard.providers import FakeEmbeddings, get_embedding_provider
 
-    application = create_app(Settings(log_level="WARNING"))
+    # worker_enabled=False: tests drive a Worker explicitly for determinism.
+    application = create_app(Settings(log_level="WARNING", worker_enabled=False))
     maker = async_sessionmaker(app_engine, expire_on_commit=False, autoflush=False)
 
     async def override_session() -> AsyncIterator[AsyncSession]:

@@ -44,8 +44,13 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_embed_model: str = "text-embedding-3-small"
     openai_audit_model: str = "gpt-4o-mini"
-    # "fake" = deterministic token-hash embeddings (CI / keyless local dev).
-    embeddings_provider: Literal["openai", "fake"] = "fake"
+    # "fake" = deterministic providers (CI / keyless local dev): token-hash
+    # embeddings + rule-based audit verdicts. Prod requires "openai".
+    ai_provider: Literal["openai", "fake"] = "fake"
+
+    # Background worker (in-process job drainer).
+    worker_enabled: bool = True
+    worker_poll_seconds: float = 1.0
 
     api_key_pepper: str = "local_dev_pepper"
 
@@ -68,8 +73,8 @@ class Settings(BaseSettings):
         if problems:
             msg = f"Refusing to start in prod with dev-default values for: {', '.join(problems)}"
             raise ValueError(msg)
-        if self.embeddings_provider != "openai" or not self.openai_api_key:
-            msg = "Prod requires embeddings_provider=openai with OPENAI_API_KEY set"
+        if self.ai_provider != "openai" or not self.openai_api_key:
+            msg = "Prod requires ai_provider=openai with OPENAI_API_KEY set"
             raise ValueError(msg)
         return self
 

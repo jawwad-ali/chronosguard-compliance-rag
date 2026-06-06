@@ -6,6 +6,7 @@ re-uses these definitions, avoiding SQLModel duplicate-table errors.
 """
 
 from chronosguard.models import base  # noqa: F401  (naming convention side effect)
+from chronosguard.models.audit import AuditFinding, AuditRun, RunStatus, RunVerdict
 from chronosguard.models.jobs import Job, JobKind, JobStatus
 from chronosguard.models.policy import OrgPolicy, OrgPolicyVersion
 from chronosguard.models.reference import Jurisdiction
@@ -23,6 +24,8 @@ from chronosguard.models.tenant import ApiKey, Organization
 __all__ = [
     "EMBEDDING_DIMS",
     "ApiKey",
+    "AuditFinding",
+    "AuditRun",
     "EffectiveDateSource",
     "ExtractionStatus",
     "Job",
@@ -34,6 +37,8 @@ __all__ = [
     "Organization",
     "RegulatoryChunk",
     "RegulatoryDocument",
+    "RunStatus",
+    "RunVerdict",
     "Supersession",
     "SupersessionRelation",
 ]
