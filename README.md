@@ -3,6 +3,8 @@
 **A "time machine" for regulations: it audits a company's internal policies against the law
 that was actually in force on any given date — and proves every claim with a verified quote.**
 
+📖 **Full case study:** [alijawwad.com/projects/chronosguard →](https://www.alijawwad.com/projects/chronosguard)
+
 [![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)](./.github/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-178_passing-brightgreen?style=flat-square)](apps/api/tests)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](apps/api/pyproject.toml)
